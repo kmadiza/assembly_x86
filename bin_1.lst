@@ -1,0 +1,156 @@
+     1                                  section .text
+     2                                  
+     3                                  global binary
+     4                                  
+     5                                  ; Given arguments
+     6                                  %define		img				[ebp+8]
+     7                                  %define		_x0				[ebp+12]
+     8                                  %define		_x1				[ebp+16]
+     9                                  %define		_y0				[ebp+20]
+    10                                  %define		_y1				[ebp+24]
+    11                                  %define		tresh			[ebp+28]
+    12                                  
+    13                                  
+    14                                  
+    15                                  binary:
+    16 00000000 55                      push	ebp
+    17 00000001 89E5                    mov	ebp, esp
+    18 00000003 83EC00                  sub    esp, 0
+    19 00000006 56                      push esi
+    20 00000007 53                      push ebx
+    21 00000008 52                      push edx
+    22                                  
+    23 00000009 8B7508                  mov esi, img ;loading bmp
+    24 0000000C BA00000000              mov edx, 0
+    25 00000011 B900000000              mov ecx, 0 ;line counter
+    26 00000016 BB00000000              mov ebx, 0 ;position index
+    27                                  find_start:
+    28 0000001B B8C0030000              mov eax, 960
+    29 00000020 8B5514                  mov edx, _y0 ;loading starting position
+    30 00000023 F7E2                    mul edx
+    31 00000025 01C6                    add esi, eax
+    32 00000027 01C3                    add ebx, eax ;moving to the starting line y0
+    33 00000029 8B450C                  mov eax,_x0 ;loading starting position x0
+    34 0000002C BA03000000              mov edx, 3
+    35 00000031 F7E2                    mul edx
+    36 00000033 01C6                    add esi, eax
+    37 00000035 01C3                    add ebx, eax ;moving to first coordinate x0, y0
+    38                                  get_red:
+    39 00000037 B800000000              mov eax, 0
+    40 0000003C 8A06                    mov al, BYTE[esi] ; reading red color
+    41 0000003E BA15000000              mov edx, 21 ; starting calculations for the output color
+    42 00000043 F7E2                    mul edx
+    43 00000045 89C7                    mov edi, eax
+    44                                  get_green:
+    45 00000047 46                      inc esi ;next value of color
+    46 00000048 43                      inc ebx
+    47 00000049 B800000000              mov eax, 0
+    48 0000004E 8A06                    mov al, BYTE[esi]
+    49 00000050 BA48000000              mov edx, 72
+    50 00000055 F7E2                    mul edx
+    51 00000057 01C7                    add edi, eax
+    52                                  
+    53                                  get_blue:
+    54 00000059 46                      inc esi ;next value of color
+    55 0000005A 43                      inc ebx
+    56 0000005B B800000000              mov eax, 0
+    57 00000060 8A06                    mov al, BYTE[esi]
+    58 00000062 BA07000000              mov edx, 7
+    59 00000067 F7E2                    mul edx
+    60 00000069 01C7                    add edi, eax ;calculated output to be compared with tresh
+    61                                  
+    62                                  compare_with_thresh:
+    63 0000006B 8B451C                  mov eax, tresh ;loading tresh
+    64 0000006E BA64000000              mov edx, 100 ;because i want to ommit floating points tresh value is multiplied by 100
+    65 00000073 F7E2                    mul edx
+    66 00000075 39C7                    cmp edi, eax ;decision which color will be put.
+    67 00000077 7F7A                    jg change_W
+    68                                  
+    69 00000079 39C7                    cmp edi, eax
+    70 0000007B 0F8E8C000000            jle change_B
+    71                                  
+    72                                  ;jmp test
+    73                                  
+    74                                  back:
+    75 00000081 83C603                  add esi, 3; setting next pixel
+    76 00000084 83C303                  add ebx, 3
+    77 00000087 8B5514                  mov edx,_y0
+    78                                  
+    79 0000008A 01CA                    add edx,ecx
+    80 0000008C B8C0030000              mov eax,960
+    81 00000091 F7E2                    mul edx
+    82 00000093 89C7                    mov edi,eax
+    83                                  
+    84 00000095 B803000000              mov eax,3
+    85 0000009A 8B5510                  mov edx,_x1
+    86 0000009D F7E2                    mul edx
+    87 0000009F 01C7                    add edi,eax
+    88 000000A1 39FB                    cmp ebx,edi
+    89                                  
+    90 000000A3 7C92                    jl get_red ;if still smaller than x0 in chosen line
+    91 000000A5 39FB                    cmp ebx, edi
+    92                                  
+    93 000000A7 7D02                    jge next_line
+    94 000000A9 7F7C                    jg test
+    95                                  
+    96                                  next_line:
+    97 000000AB B803000000              mov eax,3
+    98 000000B0 8B5510                  mov edx,_x1
+    99 000000B3 F7E2                    mul edx
+   100 000000B5 89C7                    mov edi,eax
+   101 000000B7 B8C0030000              mov eax,960
+   102 000000BC 8B5518                  mov edx,_y1
+   103 000000BF F7E2                    mul edx
+   104 000000C1 01C7                    add edi,eax
+   105                                  
+   106                                  
+   107 000000C3 39FB                    cmp ebx, edi
+   108 000000C5 7D25                    jge exit
+   109                                  
+   110 000000C7 81C6C0030000            add esi, 960
+   111 000000CD 81C3C0030000            add ebx, 960
+   112 000000D3 8B4510                  mov eax, _x1
+   113 000000D6 8B550C                  mov edx, _x0
+   114 000000D9 29D0                    sub eax, edx
+   115 000000DB BA03000000              mov edx, 3
+   116 000000E0 F7E2                    mul edx
+   117 000000E2 29C6                    sub esi, eax
+   118 000000E4 29C3                    sub ebx, eax
+   119 000000E6 41                      inc ecx
+   120                                  
+   121 000000E7 E94BFFFFFF              jmp get_red
+   122                                  
+   123                                  
+   124                                  exit:
+   125 000000EC 5A                      pop edx
+   126 000000ED 5B                      pop ebx
+   127 000000EE 5E                      pop esi		
+   128 000000EF 89C0                    mov	eax, eax
+   129 000000F1 5D                      pop	ebp
+   130 000000F2 C3                      ret
+   131                                  
+   132                                  
+   133                                  
+   134                                  change_W:
+   135 000000F3 C606FF                  mov BYTE[esi], 255
+   136 000000F6 83EE01                  sub esi, 1
+   137 000000F9 83EB01                  sub ebx,1
+   138 000000FC C606FF                  mov BYTE[esi], 255
+   139 000000FF 83EE01                  sub esi,1 
+   140 00000102 83EB01                  sub ebx,1
+   141 00000105 C606FF                  mov BYTE[esi], 255
+   142 00000108 E974FFFFFF              jmp back
+   143                                  
+   144                                  change_B:
+   145 0000010D C60600                  mov BYTE[esi], 0
+   146 00000110 83EE01                  sub esi, 1
+   147 00000113 83EB01                  sub ebx,1
+   148 00000116 C60600                  mov BYTE[esi], 0
+   149 00000119 83EE01                  sub esi,1 
+   150 0000011C 83EB01                  sub ebx,1
+   151 0000011F C60600                  mov BYTE[esi], 0
+   152 00000122 E95AFFFFFF              jmp back
+   153                                  
+   154                                  test:
+   155 00000127 B80A000000              mov eax, 10
+   156 0000012C EBBE                    jmp exit
